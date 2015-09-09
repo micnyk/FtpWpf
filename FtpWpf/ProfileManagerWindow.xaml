@@ -12,8 +12,8 @@
             <RowDefinition Height="4*" />
             <RowDefinition Height="2*" />
         </Grid.RowDefinitions>
-        
-        <Grid Grid.Row="0"  HorizontalAlignment="Stretch">
+
+        <Grid Grid.Row="0" HorizontalAlignment="Stretch">
             <ListView x:Name="lvProfiles" SelectionChanged="lvProfiles_SelectionChanged">
                 <ListView.View>
                     <GridView>
@@ -37,11 +37,15 @@
                 <RowDefinition Height="1*" />
                 <RowDefinition Height="1*" />
             </Grid.RowDefinitions>
-            
-            <Button Name="btnSelect" Style="{StaticResource ProfileManagerButton}" Grid.Column="0" Grid.Row="2" Content="Select" Click="btnSelect_Click" />
-            <Button Name="btnAdd" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Grid.Column="1" Grid.Row="2" Content="Add" Click="btnAdd_Click" />
-            <Button Name="btnRemove" Style="{StaticResource ProfileManagerButton}" Grid.Column="2" Grid.Row="2" Content="Remove" Click="btnRemove_Click" />
-            <Button Name="btnUpdate" Style="{StaticResource ProfileManagerButton}" Grid.Column="3" Grid.Row="2" Content="Update" Click="btnUpdate_Click" />
+
+            <Button Name="btnSelect" Style="{StaticResource ProfileManagerButton}" Grid.Column="0" Grid.Row="2"
+                    Content="Select" Click="btnSelect_Click" />
+            <Button Name="btnAdd" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Grid.Column="1"
+                    Grid.Row="2" Content="Add" Click="btnAdd_Click" />
+            <Button Name="btnRemove" Style="{StaticResource ProfileManagerButton}" Grid.Column="2" Grid.Row="2"
+                    Content="Remove" Click="btnRemove_Click" />
+            <Button Name="btnUpdate" Style="{StaticResource ProfileManagerButton}" Grid.Column="3" Grid.Row="2"
+                    Content="Update" Click="btnUpdate_Click" />
 
             <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0">
                 <TextBlock Margin="10px 0px 0px 0px" Text="Host:" />
@@ -50,7 +54,7 @@
 
             <StackPanel Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="0">
                 <TextBlock Text="Port:" />
-                <TextBox Name="tbPort" MaxWidth="85px" MinWidth="60px" HorizontalAlignment="Left"/>
+                <TextBox Name="tbPort" MaxWidth="85px" MinWidth="60px" HorizontalAlignment="Left" />
             </StackPanel>
 
             <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1">
@@ -60,7 +64,7 @@
 
             <StackPanel Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="1">
                 <TextBlock Text="Password:" />
-                <TextBox Name="tbPassword" Margin="0px 0px 10px 0px"/>
+                <TextBox Name="tbPassword" Margin="0px 0px 10px 0px" />
             </StackPanel>
         </Grid>
 

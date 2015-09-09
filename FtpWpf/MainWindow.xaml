@@ -4,14 +4,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:FtpWpf"
-        xmlns:fileSystemModel="clr-namespace:FtpWpf.FileSystemModel"
+        xmlns:fileSystemModel="clr-namespace:FtpWpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="300" Width="300">
+        Title="MainWindow" Height="501" Width="692">
     <Grid>
 
-        <TreeView x:Name="treeView">
-            
-        </TreeView>
+        <TreeView x:Name="treeView" />
 
     </Grid>
 </Window>

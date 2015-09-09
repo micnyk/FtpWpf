@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:FtpWpf"
              StartupUri="ProfileManagerWindow.xaml">
     <Application.Resources>
-         <ResourceDictionary Source="ResourceDictionary.xaml" />
+        <ResourceDictionary Source="ResourceDictionary.xaml" />
     </Application.Resources>
 </Application>

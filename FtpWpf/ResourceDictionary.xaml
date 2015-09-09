@@ -8,5 +8,5 @@
         <Setter Property="MaxWidth" Value="80px" />
         <Setter Property="IsEnabled" Value="False" />
     </Style>
-    
+
 </ResourceDictionary>

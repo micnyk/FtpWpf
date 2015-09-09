@@ -1,23 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Collections;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Data.Linq;
-using System.IO;
 
 namespace FtpWpf
 {
@@ -31,8 +15,7 @@ namespace FtpWpf
 
         private void Initialize()
         {
-            var profileManager = ProfileManager.Instance;
-            lvProfiles.ItemsSource = profileManager.ProfilesCollection;
+            lvProfiles.ItemsSource = ProfileManager.Instance.ProfilesCollection;
         }
 
         private ProfileManager.Profile GetSelectedProfile()
@@ -63,7 +46,7 @@ namespace FtpWpf
             var selectedProfile = GetSelectedProfile();
 
             tbHost.Text = selectedProfile.Host;
-            tbPort.Text = selectedProfile.GetUri().Port.ToString();
+            tbPort.Text = (selectedProfile.Port > 0) ? selectedProfile.Port.ToString() : "21";
             tbUsername.Text = selectedProfile.Username ?? "";
             tbPassword.Text = selectedProfile.Password ?? "";
         }
@@ -81,7 +64,7 @@ namespace FtpWpf
             ProfileManager.Instance.AddProfile(new ProfileManager.Profile
             {
                 Host = tbHost.Text,
-                Port = (tbPort.Text.Length > 0) ?  Convert.ToInt32(tbPort.Text) : -1,
+                Port = (tbPort.Text.Length > 0) ? Convert.ToInt32(tbPort.Text) : -1,
                 Username = tbUsername.Text,
                 Password = tbPassword.Text
             });
@@ -116,10 +99,12 @@ namespace FtpWpf
             if (selectedProfile == null)
                 return;
 
+            //TODO: zabawa sie zaczyna 
+
             var con = new FtpConnection(selectedProfile);
             var list = con.GetDirectoryList();
 
-            MainWindow mw = new MainWindow(list);
+            var mw = new MainWindow(list);
             mw.Show();
             Close();
         }

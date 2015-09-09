@@ -1,58 +1,51 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data.Linq;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
-using System.Threading;
+using System.Security.RightsManagement;
 using System.Windows;
 
 namespace FtpWpf
 {
-    class ProfilesSourceSQLite : IProfilesSource
+    internal class ProfilesSourceSQLite : IProfilesSource
     {
-        private SQLiteConnection dbConnection;
-        private DataContext dbContext;
+        private readonly SQLiteConnection _dbConnection;
+        private readonly DataContext _dbContext;
 
-        private ObservableTable<ProfileManager.Profile> Profiles;
-        public IEnumerable<ProfileManager.Profile> ProfilesCollection => Profiles;
+        private readonly ObservableTable<ProfileManager.Profile> _profiles;
+        public IEnumerable<ProfileManager.Profile> ProfilesCollection => _profiles;
 
         public ProfilesSourceSQLite()
         {
-            string dbPath = Directory.GetCurrentDirectory() + @"\FtpWpf.sqlite";
-            bool exists = false;
+            var dbPath = Directory.GetCurrentDirectory() + @"\FtpWpf.sqlite";
+            var exists = false;
 
             if (File.Exists(dbPath))
                 exists = true;
             else
                 SQLiteConnection.CreateFile(dbPath);
 
-            dbConnection = new SQLiteConnection(string.Format(@"Data Source={0};Version=3", dbPath));
-            dbConnection.Open();
-            
+            _dbConnection = new SQLiteConnection($@"Data Source={dbPath};Version=3");
+            _dbConnection.Open();
+
             if (!exists)
                 CreateTable();
 
-            dbContext = new DataContext(dbConnection);
-            Profiles = new ObservableTable<ProfileManager.Profile>(ref dbContext);
+            _dbContext = new DataContext(_dbConnection);
+            _profiles = new ObservableTable<ProfileManager.Profile>(ref _dbContext);
         }
 
-        private void CreateTable()
-        {
-            var cmd = new SQLiteCommand(@"create table profiles (id int, host text, port int, username text, password text, primary key(id))", dbConnection);
-            cmd.ExecuteNonQuery();
-        }
 
         public bool AddProfile(ProfileManager.Profile profile)
         {
             try
             {
-                Profiles.InsertOnSubmit(profile);
-                dbContext.SubmitChanges();
+                _profiles.InsertOnSubmit(profile);
+                _dbContext.SubmitChanges();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 MessageBox.Show(e.Message);
                 return false;
@@ -61,27 +54,12 @@ namespace FtpWpf
             return true;
         }
 
-        public bool GetProfiles(out List<ProfileManager.Profile> profiles)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ProfileManager.Profile GetProfile(int? id)
-        {
-            var queryProfiles = (from p in Profiles where p.Id == id select p).ToArray();
-
-            if (!queryProfiles.Any())
-                return null;
-
-            return queryProfiles[0];
-        }
-
         public bool RemoveProfile(ProfileManager.Profile profile)
         {
             try
             {
-                Profiles.DeleteOnSubmit(profile);
-                dbContext.SubmitChanges();
+                _profiles.DeleteOnSubmit(profile);
+                _dbContext.SubmitChanges();
             }
             catch (Exception e)
             {
@@ -94,8 +72,17 @@ namespace FtpWpf
 
         public bool UpdateProfile(ProfileManager.Profile profile)
         {
-            dbContext.SubmitChanges();
+            _dbContext.SubmitChanges();
             return true;
+        }
+
+        private void CreateTable()
+        {
+            var cmd =
+                new SQLiteCommand(
+                    @"create table profiles (id int, host text, port int, username text, password text, primary key(id))",
+                    _dbConnection);
+            cmd.ExecuteNonQuery();
         }
     }
 }

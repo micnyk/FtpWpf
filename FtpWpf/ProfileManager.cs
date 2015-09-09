@@ -9,66 +9,47 @@ using FtpWpf.Annotations;
 
 namespace FtpWpf
 {
-
     public class ProfileManager
     {
-        private IProfilesSource profilesSource;
-        public IEnumerable<Profile> ProfilesCollection => profilesSource.ProfilesCollection;
+        private static ProfileManager _instance;
+        public static ProfileManager Instance => _instance ?? (_instance = new ProfileManager());
 
-        private static ProfileManager instance;
-        public static ProfileManager Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new ProfileManager();
-
-                return instance;
-            }
-        }
-
+        private readonly IProfilesSource _profilesSource;
+        public IEnumerable<Profile> ProfilesCollection => _profilesSource.ProfilesCollection;
+        
         public ProfileManager(IProfilesSource profilesSource = null)
         {
-            if (profilesSource != null)
-                this.profilesSource = profilesSource;
-            else
-                this.profilesSource = new ProfilesSourceSQLite();
+            _profilesSource = profilesSource ?? new ProfilesSourceSQLite();
         }
 
         public bool AddProfile(Profile profile)
         {
-            Random random = new Random();
+            var random = new Random();
+            //TODO: check if id already exists
             profile.Id = random.Next(1001, 9999);
 
-            return profilesSource.AddProfile(profile);
+            return _profilesSource.AddProfile(profile);
         }
 
         public bool RemoveProfile(Profile profile)
         {
-            return profilesSource.RemoveProfile(profile);
+            return _profilesSource.RemoveProfile(profile);
         }
 
         public bool UpdateProfile(Profile profile)
         {
-            return profilesSource.UpdateProfile(profile);
+            return _profilesSource.UpdateProfile(profile);
         }
 
         [Table(Name = "profiles")]
         public class Profile : INotifyPropertyChanged
         {
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            [NotifyPropertyChangedInvocator]
-            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+            private string _host;
 
             private int? _id;
-            private string _host;
+            private string _password;
             private int? _port;
             private string _username;
-            private string _password;
 
             [Key]
             [Column(Name = "id", IsPrimaryKey = true, CanBeNull = false, IsDbGenerated = false)]
@@ -131,9 +112,17 @@ namespace FtpWpf
                 }
             }
 
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            [NotifyPropertyChangedInvocator]
+            protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+
             public Uri GetUri()
             {
-                UriBuilder builder = new UriBuilder
+                var builder = new UriBuilder
                 {
                     Scheme = "FTP",
                     Host = Host,
@@ -153,7 +142,7 @@ namespace FtpWpf
 
             public override string ToString()
             {
-                string ret = Id + ": ";
+                var ret = Id + ": ";
 
                 var nc = GetNetworkCredentials();
                 if (nc != null)

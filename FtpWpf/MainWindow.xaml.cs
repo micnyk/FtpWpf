@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using FtpWpf.FileSystemModel;
 
 namespace FtpWpf
 {
@@ -21,7 +13,7 @@ namespace FtpWpf
             InitializeComponent();
         }
 
-        public MainWindow(List<FileSystemModel.FileSystemModelItem> items)
+        public MainWindow(List<Item> items)
         {
             InitializeComponent();
 
@@ -31,12 +23,16 @@ namespace FtpWpf
             }
         }
 
-        private TreeViewItem GetItems(FileSystemModel.FileSystemModelItem item)
+        private TreeViewItem GetItems(Item item)
         {
-            var tvItem = new TreeViewItem { Header = item.Name };
+            var tvItem = new TreeViewItem {Header = item.Name};
 
-            if (item is FileSystemModel.Directory && (((FileSystemModel.Directory) item).Items.Any()))
-                foreach (var subItem in ((FileSystemModel.Directory) item).Items) tvItem.Items.Add(GetItems(subItem));
+            var directory = item as Directory;
+            if (directory == null || !directory.Items.Any())
+                return tvItem;
+
+            foreach (var subItem in directory.Items)
+                tvItem.Items.Add(GetItems(subItem));
 
             return tvItem;
         }
