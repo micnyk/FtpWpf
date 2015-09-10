@@ -20,7 +20,7 @@ namespace FtpWpf
                 _networkCredentials = credentials;
         }
 
-        public List<Item> GetDirectoryList(string relativePath = "/")
+       /* public List<Item> GetDirectoryList(string relativePath = "/")
         {
             var requestUri = new Uri(_uri, relativePath);
             relativePath = _uri.MakeRelativeUri(requestUri).ToString();
@@ -39,7 +39,7 @@ namespace FtpWpf
             {
                 using (var response = (FtpWebResponse) ftpRequest.GetResponse())
                 {
-                    items = ItemsProvider.GetItems(response.GetResponseStream(), relativePath);
+                   // items = ItemsProvider.GetItems(response.GetResponseStream(), relativePath);
                 }
             }
             catch (Exception)
@@ -55,6 +55,6 @@ namespace FtpWpf
             }
 
             return items;
-        }
+        }*/
     }
 }

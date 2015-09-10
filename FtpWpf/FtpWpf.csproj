@@ -131,6 +131,7 @@
     </Compile>
     <Compile Include="FileSystemModel.cs" />
     <Compile Include="FtpConnection.cs" />
+    <Compile Include="FtpController.cs" />
     <Compile Include="IProfilesSource.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
