@@ -1,30 +1,59 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using FtpWpf.Annotations;
 
 namespace FtpWpf
 {
     namespace FileSystemModel
     {
-        public class Item
+        public class Item : INotifyCollectionChanged, INotifyPropertyChanged
         {
-            public string Name { get; set; }
-            public string Path { get; set; }
+            public event NotifyCollectionChangedEventHandler CollectionChanged;
+            public event PropertyChangedEventHandler PropertyChanged;
 
+            private string _name;
+            private string _path;
+            private readonly ObservableCollection<Item> _items;
+
+            public Item()
+            {
+                _items = new ObservableCollection<Item>();
+                _items.CollectionChanged += delegate(object sender, NotifyCollectionChangedEventArgs action)
+                {
+                    CollectionChanged?.Invoke(sender, action);
+                };
+            }
+
+            public string Name
+            {
+                get { return _name; }
+                set { _name = value; NotifyPropertyChanged("Name"); }
+            }
+
+            public string Path
+            {
+                get { return _path; }
+                set { _path = value; NotifyPropertyChanged("Path"); }
+            }
+
+            public ObservableCollection<Item> Items => _items;
+
+            protected void NotifyPropertyChanged(string property)
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(property));
+            }
         }
 
         public class File : Item
         { }
 
         public class Directory : Item
-        {
-            public List<Item> Items { get; set; }
-
-            public Directory()
-            {
-                Items = new List<Item>();
-            }
-        }
+        { }
 
         public static class ItemsProvider
         {

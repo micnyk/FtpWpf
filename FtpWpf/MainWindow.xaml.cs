@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using FtpWpf.FileSystemModel;
@@ -8,33 +11,22 @@ namespace FtpWpf
 {
     public partial class MainWindow : Window
     {
+        private volatile ObservableCollection<Item> items;
+         
         public MainWindow()
         {
             InitializeComponent();
-        }
 
-        public MainWindow(List<Item> items)
-        {
-            InitializeComponent();
-
-            foreach (var item in items)
+            items = new ObservableCollection<Item>
             {
-                treeView.Items.Add(GetItems(item));
-            }
-        }
+                new Directory {Name = "raz" },
+                new Directory {Name = "dwa"},
+                new Directory { Name = "trzy" }
+            };
 
-        private TreeViewItem GetItems(Item item)
-        {
-            var tvItem = new TreeViewItem {Header = item.Name};
+            items[0].Items.Add(new File { Name = "tazPlik.pdf" });
 
-            var directory = item as Directory;
-            if (directory == null || !directory.Items.Any())
-                return tvItem;
-
-            foreach (var subItem in directory.Items)
-                tvItem.Items.Add(GetItems(subItem));
-
-            return tvItem;
+            treeView.ItemsSource = items;
         }
     }
 }

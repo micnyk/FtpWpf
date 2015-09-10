@@ -49,9 +49,9 @@ namespace FtpWpf
 
             foreach (var item in items)
             {
-                var directory = item as Directory;
-                if (directory != null)
-                    directory.Items = GetDirectoryList(relativePath + "/" + directory.Name);
+               // var directory = item as Directory;
+               // if (directory != null)
+               //     directory.Items = GetDirectoryList(relativePath + "/" + directory.Name);
             }
 
             return items;

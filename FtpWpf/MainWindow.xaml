@@ -3,13 +3,21 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:FtpWpf"
-        xmlns:fileSystemModel="clr-namespace:FtpWpf"
+        xmlns:fileSystemModel="clr-namespace:FtpWpf.FileSystemModel"
         mc:Ignorable="d"
         Title="MainWindow" Height="501" Width="692">
+
+    <Window.DataContext>
+        <fileSystemModel:Item />
+    </Window.DataContext>
+    
     <Grid>
-
-        <TreeView x:Name="treeView" />
-
+        <TreeView x:Name="treeView">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Items}" DataType="{x:Type fileSystemModel:Item}">
+                    <TreeViewItem Header="{Binding Name}" />
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
     </Grid>
 </Window>

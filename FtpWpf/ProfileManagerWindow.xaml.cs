@@ -99,14 +99,7 @@ namespace FtpWpf
             if (selectedProfile == null)
                 return;
 
-            //TODO: zabawa sie zaczyna 
-
-            var con = new FtpConnection(selectedProfile);
-            var list = con.GetDirectoryList();
-
-            var mw = new MainWindow(list);
-            mw.Show();
-            Close();
+            //TODO: profile selected
         }
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)
