@@ -99,7 +99,9 @@ namespace FtpWpf
             if (selectedProfile == null)
                 return;
 
-            //TODO: profile selected
+            var mw = new MainWindow(selectedProfile);
+            mw.Show();
+            Close();
         }
 
         private void btnUpdate_Click(object sender, RoutedEventArgs e)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
+using System.Windows;
 using FtpWpf.FileSystemModel;
 
 namespace FtpWpf
@@ -11,6 +13,8 @@ namespace FtpWpf
         private readonly NetworkCredential _networkCredentials;
         private readonly Uri _uri;
 
+        public string RelativePath { get; private set; }
+
         public FtpConnection(ProfileManager.Profile profile)
         {
             _uri = profile.GetUri();
@@ -18,6 +22,35 @@ namespace FtpWpf
             var credentials = profile.GetNetworkCredentials();
             if (credentials != null)
                 _networkCredentials = credentials;
+        }
+
+        public Stream ListDirectory(string path)
+        {
+            var requestUri = new Uri(_uri, path);
+            var request = (FtpWebRequest) WebRequest.Create(requestUri);
+
+            RelativePath = _uri.MakeRelativeUri(requestUri).ToString();
+
+            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
+            request.Proxy = null;
+            request.KeepAlive = true;
+            if (_networkCredentials != null)
+                request.Credentials = _networkCredentials;
+
+            Stream stream;
+
+            try
+            {
+                var response = request.GetResponse();
+                stream = response.GetResponseStream();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Error: " + e.Message);
+                stream = new MemoryStream();
+            }
+
+            return stream;
         }
 
        /* public List<Item> GetDirectoryList(string relativePath = "/")

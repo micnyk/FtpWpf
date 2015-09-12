@@ -98,7 +98,7 @@ namespace FtpWpf
                 return item;
             }
 
-            public static void AppendItems(Stream ftpResponseStream, string relativePath, ref ObservableCollection<Item> items)
+            public static void AppendItems(Stream ftpResponseStream, string relativePath, ObservableCollection<Item> items)
             {
                 using (var streamReader = new StreamReader(ftpResponseStream))
                 {
@@ -114,7 +114,7 @@ namespace FtpWpf
             public static ObservableCollection<Item> GetItems(Stream ftpResponseStream, string relativePath)
             {
                 var items = new ObservableCollection<Item>();
-                AppendItems(ftpResponseStream, relativePath, ref items);
+                AppendItems(ftpResponseStream, relativePath, items);
                 return items;
             }
         }
