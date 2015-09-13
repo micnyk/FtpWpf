@@ -21,6 +21,8 @@ namespace FtpWpf
             private string _name;
             private string _path;
 
+            public bool IsSelected { get; set; }
+
             public Item()
             {
                 Items = new ObservableCollection<Item>();

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using FtpWpf.FileSystemModel;
+using File = FtpWpf.FileSystemModel.File;
 
 namespace FtpWpf
 {
@@ -21,6 +22,8 @@ namespace FtpWpf
         {
             InitializeComponent();
 
+            Logger.LogEvent += AppendLogList;
+
             var controller = FtpController.Instance;
             controller.Profile = profile;
             controller.Dispatcher = treeView.Dispatcher;
@@ -28,6 +31,20 @@ namespace FtpWpf
             treeView.ItemsSource = controller.Items;
 
             controller.ListDirectory("/");
+        }
+
+        private void AppendLogList(object sender, LogEventArgs args)
+        {
+            tbLog.Dispatcher.Invoke(() => { tbLog.Text += args.Message + "\n"; });
+        }
+
+        private void btnDownload_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedItem = treeView.SelectedItem;
+            if (!(selectedItem is File))
+                return;
+
+            FtpController.Instance.DownloadFile(selectedItem as File);
         }
     }
 }

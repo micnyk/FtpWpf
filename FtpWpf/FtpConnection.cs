@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Windows;
 using FtpWpf.FileSystemModel;
+using File = FtpWpf.FileSystemModel.File;
 
 namespace FtpWpf
 {
@@ -13,6 +14,7 @@ namespace FtpWpf
         private readonly NetworkCredential _networkCredentials;
         private readonly Uri _uri;
 
+        public event EventHandler<FileProgressEventArgs> FileProgress;
         public string RelativePath { get; private set; }
 
         public FtpConnection(ProfileManager.Profile profile)
@@ -24,18 +26,31 @@ namespace FtpWpf
                 _networkCredentials = credentials;
         }
 
-        public Stream ListDirectory(string path)
+        private FtpWebRequest CreateRequest(Uri requestUri)
         {
-            var requestUri = new Uri(_uri, path);
             var request = (FtpWebRequest) WebRequest.Create(requestUri);
-
-            RelativePath = _uri.MakeRelativeUri(requestUri).ToString();
-
-            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
             request.Proxy = null;
             request.KeepAlive = true;
+
             if (_networkCredentials != null)
                 request.Credentials = _networkCredentials;
+
+            return request;
+        }
+
+        private Uri CreateRequestUri(string path)
+        {
+            var requestUri = new Uri(_uri, path);
+            RelativePath = _uri.MakeRelativeUri(requestUri).ToString();
+
+            return requestUri;
+        }
+
+        public Stream ListDirectory(string path)
+        {
+            var requestUri = CreateRequestUri(path);
+            var request = CreateRequest(requestUri);
+            request.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
 
             Stream stream;
 
@@ -46,48 +61,65 @@ namespace FtpWpf
             }
             catch (Exception e)
             {
-                MessageBox.Show("Error: " + e.Message);
+                Logger.Log(Logger.Type.Warning, $"FTP protocol error on path='{path}': {e.Message}");
                 stream = new MemoryStream();
             }
 
             return stream;
         }
 
-       /* public List<Item> GetDirectoryList(string relativePath = "/")
+        public bool DownloadFile(File file, Stream output)
         {
-            var requestUri = new Uri(_uri, relativePath);
-            relativePath = _uri.MakeRelativeUri(requestUri).ToString();
+            // TODO: uporzadkowac w ItemsProvider path zeby bylo jednakowo
+            var path = file.Path;
 
-            var ftpRequest = (FtpWebRequest) WebRequest.Create(requestUri);
-            ftpRequest.Method = WebRequestMethods.Ftp.ListDirectoryDetails;
-            ftpRequest.Proxy = null;
-            ftpRequest.KeepAlive = true;
+            //var fileStream = new BinaryWriter(System.IO.File.OpenWrite(@"C:\Users\Michał\Desktop\file"));
 
-            if (_networkCredentials != null)
-                ftpRequest.Credentials = _networkCredentials;
+            var len = path.Length;
+            var lastChar = path[len - 1];
+            if(len > 1 && (lastChar != '/' || lastChar != '\\'))
+                path += "/";
+            path += file.Name;
 
-            List<Item> items;
+            int fileBufferSize = 2048;
 
-            try
+            var requestUri = CreateRequestUri(path);
+            var request = CreateRequest(requestUri);
+            request.Method = WebRequestMethods.Ftp.DownloadFile;
+            request.UseBinary = true;
+
+            using (var response = request.GetResponse())
             {
-                using (var response = (FtpWebResponse) ftpRequest.GetResponse())
+                var responseStream = response.GetResponseStream();
+                if (responseStream == null)
+                    return false;
+
+                var reader = new BinaryReader(responseStream);
+                var writer = new BinaryWriter(output);
+
+                long offset = 0;
+
+                while (offset < response.ContentLength)
                 {
-                   // items = ItemsProvider.GetItems(response.GetResponseStream(), relativePath);
+                    var buffer = reader.ReadBytes(fileBufferSize);
+                    writer.Write(buffer, 0, buffer.Length);
+                    offset += buffer.LongLength;
+
+                    FileProgress?.Invoke(this,
+                        new FileProgressEventArgs {TotalSize = response.ContentLength, Actual = offset});
                 }
-            }
-            catch (Exception)
-            {
-                return new List<Item>();
+
+                writer.Close();
             }
 
-            foreach (var item in items)
-            {
-               // var directory = item as Directory;
-               // if (directory != null)
-               //     directory.Items = GetDirectoryList(relativePath + "/" + directory.Name);
-            }
+            return true;
+        }
+    }
 
-            return items;
-        }*/
+    public class FileProgressEventArgs : EventArgs
+    {
+        public long TotalSize { get; set; }
+        public long Actual { get; set; }
+        public int Progress => (int) (((double) Actual/(double) TotalSize)*100);
     }
 }

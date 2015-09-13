@@ -27,6 +27,22 @@ namespace FtpWpf
             Items = new ObservableCollection<Item>();
         }
 
+        public bool DownloadFile(File file)
+        {
+            if (Profile == null)
+                return false;
+
+            FtpConnection connection = new FtpConnection(Profile);
+            connection.FileProgress += delegate(object sender, FileProgressEventArgs args)
+            {
+                Logger.Log(Logger.Type.Info, "Progress: " + args.Progress, sender);
+            };
+
+            connection.DownloadFile(file, new MemoryStream());
+
+            return true;
+        }
+
         public bool ListDirectory(string path, ObservableCollection<Item> collection = null)
         {
             if (Profile == null || Dispatcher == null)
