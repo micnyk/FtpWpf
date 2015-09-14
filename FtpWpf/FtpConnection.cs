@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Runtime.InteropServices.ComTypes;
 using System.Windows;
 using FtpWpf.FileSystemModel;
+using Directory = FtpWpf.FileSystemModel.Directory;
 using File = FtpWpf.FileSystemModel.File;
 
 namespace FtpWpf
@@ -110,6 +112,85 @@ namespace FtpWpf
                 }
 
                 writer.Close();
+            }
+
+            return true;
+        }
+
+        public bool Rename(Item item, string name)
+        {
+            var path = item.Path;
+            var len = path.Length;
+            var lastChar = path[len - 1];
+            if (len > 1 && (lastChar != '/' || lastChar != '\\'))
+                path += "/";
+            path += item.Name;
+
+            var requestUri = CreateRequestUri(path);
+            var request = CreateRequest(requestUri);
+            request.Method = WebRequestMethods.Ftp.Rename;
+            request.RenameTo = name;
+
+            try
+            {
+                request.GetResponse();
+            }
+            catch (Exception e)
+            {
+                Logger.Log(Logger.Type.Warning, "FTP Error renaming item: " + e.Message, this);
+                return false;
+            }
+
+            item.Name = name;
+            return true;
+        }
+
+        public bool Remove(Item item)
+        {
+            var path = item.Path;
+            var len = path.Length;
+            var lastChar = path[len - 1];
+            if (len > 1 && (lastChar != '/' || lastChar != '\\'))
+                path += "/";
+            path += item.Name;
+
+            var requestUri = CreateRequestUri(path);
+            var request = CreateRequest(requestUri);
+            request.Method = (item is Directory)
+                ? WebRequestMethods.Ftp.RemoveDirectory
+                : WebRequestMethods.Ftp.DeleteFile;
+
+            try
+            {
+                request.GetResponse();
+            }
+            catch (Exception e)
+            {
+                Logger.Log(Logger.Type.Warning, "FTP Error deleting item: " + e.Message, this);
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool New(Item item)
+        {
+            var requestUri = CreateRequestUri(item.Path + item.Name);
+            var request = CreateRequest(requestUri);
+
+            if (item is Directory)
+                request.Method = WebRequestMethods.Ftp.MakeDirectory;
+            else
+                return false;
+
+            try
+            {
+                request.GetResponse();
+            }
+            catch (Exception e)
+            {
+                Logger.Log(Logger.Type.Warning, "FTP Error create directory: " + e.Message, this);
+                return false;
             }
 
             return true;

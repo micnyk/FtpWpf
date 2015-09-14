@@ -21,6 +21,8 @@ namespace FtpWpf
         public ProfileManager.Profile Profile { get; set; }
         public ObservableCollection<Item> Items { get; } 
         public Dispatcher Dispatcher { get; set; }
+        public event EventHandler<FileProgressEventArgs> FileProgress;
+        public event EventHandler<ActionStartedEventArgs> ActionStarted; // TODO: ActionFailed and ActionSucceed events
 
         private FtpController()
         {
@@ -32,14 +34,20 @@ namespace FtpWpf
             if (Profile == null)
                 return false;
 
-            FtpConnection connection = new FtpConnection(Profile);
-            connection.FileProgress += delegate(object sender, FileProgressEventArgs args)
+            Task.Run(() =>
             {
-                Logger.Log(Logger.Type.Info, "Progress: " + args.Progress, sender);
-            };
+                FtpConnection connection;
+                lock (Profile) { connection = new FtpConnection(Profile); }
 
-            connection.DownloadFile(file, new MemoryStream());
+                connection.FileProgress += delegate(object sender, FileProgressEventArgs args)
+                {
+                    FileProgress?.Invoke(sender, args);
+                };
 
+                ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.DownloadFile, Target = file});
+                connection.DownloadFile(file, new MemoryStream());
+            });
+       
             return true;
         }
 
@@ -49,7 +57,15 @@ namespace FtpWpf
                 return false;
 
             if (collection == null)
+            {
                 collection = Items;
+                ActionStarted?.Invoke(this,
+                    new ActionStartedEventArgs
+                    {
+                        Action = Action.ListDirectory,
+                        Target = new Directory {Name = "/", Path = "/"}
+                    });
+            }
 
             Task.Run(() =>
             {
@@ -66,6 +82,7 @@ namespace FtpWpf
                     if (item is Directory)
                     {
                         var relPath = connection.RelativePath + "/" + item.Name;
+                        ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.ListDirectory, Target = item});
                         ListDirectory(relPath, item.Items);
                     }
                 }
@@ -74,9 +91,78 @@ namespace FtpWpf
             return true;
         }
 
+        public bool Rename(Item item, string name)
+        {
+            if(Profile == null)
+                return false;
+
+            ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.RenameFile, Target = item});
+
+            Task.Run(() =>
+            {
+                FtpConnection connection;
+                lock(Profile) { connection = new FtpConnection(Profile); }
+
+                connection.Rename(item, name);
+            });
+
+            return true;
+        }
+
+        public bool Delete(Item item)
+        {
+            if (Profile == null)
+                return false;
+
+            ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.DeleteFile, Target = item});
+            Task.Run(() =>
+            {
+                FtpConnection connection;
+                lock (Profile) { connection = new FtpConnection(Profile); }
+
+                connection.Remove(item);
+            });
+
+            return true;
+        }
+
+        public bool NewDirectory(Directory directory)
+        {
+            if (Profile == null || Dispatcher == null)
+                return false;
+
+            ActionStarted?.Invoke(this, new ActionStartedEventArgs { Action = Action.UploadFile, Target = directory });
+            Task.Run(() =>
+            {
+                FtpConnection connection;
+                lock (Profile) { connection = new FtpConnection(Profile); }
+
+                connection.New(directory);
+
+                Dispatcher.Invoke(() => { Items.Add(directory); });
+            });
+
+            return true;
+        }
+
         private void SafeAppendItems(ObservableCollection<Item> collection, string path, Stream stream)
         {
             Dispatcher.Invoke(() => { ItemsProvider.AppendItems(stream, path, collection); });
+        }
+
+        public enum Action
+        {
+            ListDirectory,
+            DownloadFile,
+            UploadFile,
+            RenameFile,
+            DeleteFile
+        }
+
+        public class ActionStartedEventArgs : EventArgs
+        {
+            public Action Action { get; set; }
+            public Item Target { get; set; }
         }
     }
 }
