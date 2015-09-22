@@ -64,7 +64,7 @@ namespace FtpWpf
             catch (Exception e)
             {
                 Logger.Log(Logger.Type.Warning, $"FTP protocol error on path='{path}': {e.Message}");
-                stream = new MemoryStream();
+                throw;
             }
 
             return stream;

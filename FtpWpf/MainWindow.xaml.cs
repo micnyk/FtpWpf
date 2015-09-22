@@ -31,18 +31,19 @@ namespace FtpWpf
             {
                 ProgressBar.Dispatcher.Invoke(delegate { ProgressBar.Value = args.Progress; });
             };
-            controller.ActionStarted += LogActionStarted;
+
+            controller.ActionEvent += LogAction;
             controller.Profile = profile;
             controller.Dispatcher = treeView.Dispatcher;
             treeView.ItemsSource = controller.Items;
-            controller.ListDirectory("/");
+            controller.ListDirectory();
         }
 
-        private void LogActionStarted(object sneder, FtpController.ActionStartedEventArgs args)
+        private void LogAction(object sneder, FtpController.ActionEventArgs args)
         {
             tbLog.Dispatcher.Invoke(() =>
             {
-                tbLog.Text += args.Action + ": '" + args.Target.Path;
+                tbLog.Text += args.Action + " " + args.Status + ": '" + args.Target.Path;
                 tbLog.Text += (args.Target.Name.Equals("/") ? "" : args.Target.Name) + "'\n";
                 tbLog.ScrollToEnd();
             });

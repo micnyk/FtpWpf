@@ -21,8 +21,9 @@ namespace FtpWpf
         public ProfileManager.Profile Profile { get; set; }
         public ObservableCollection<Item> Items { get; } 
         public Dispatcher Dispatcher { get; set; }
+
         public event EventHandler<FileProgressEventArgs> FileProgress;
-        public event EventHandler<ActionStartedEventArgs> ActionStarted; // TODO: ActionFailed and ActionSucceed events
+        public event EventHandler<ActionEventArgs> ActionEvent;
 
         private FtpController()
         {
@@ -42,49 +43,54 @@ namespace FtpWpf
                 connection.FileProgress += delegate(object sender, FileProgressEventArgs args)
                 {
                     FileProgress?.Invoke(sender, args);
+
+                    if(args.Progress > 99)
+                        ActionEvent?.Invoke(this, ActionEventArgs.DownloadSucceed(file));
                 };
 
-                ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.DownloadFile, Target = file});
+                ActionEvent?.Invoke(this, ActionEventArgs.DownloadStarted(file));
                 connection.DownloadFile(file, new MemoryStream());
             });
        
             return true;
         }
 
-        public bool ListDirectory(string path, ObservableCollection<Item> collection = null)
+        public bool ListDirectory(Directory directory = null, ObservableCollection<Item> collection = null)
         {
             if (Profile == null || Dispatcher == null)
                 return false;
 
             if (collection == null)
-            {
                 collection = Items;
-                ActionStarted?.Invoke(this,
-                    new ActionStartedEventArgs
-                    {
-                        Action = Action.ListDirectory,
-                        Target = new Directory {Name = "/", Path = "/"}
-                    });
-            }
+
+            if (directory == null)
+                directory = new Directory {Name = "", Path = "/"};
 
             Task.Run(() =>
             {
+                ActionEvent?.Invoke(this, ActionEventArgs.ListStarted(directory));
+
                 FtpConnection connection;
                 lock (Profile) { connection = new FtpConnection(Profile); }
 
-                using (var stream = connection.ListDirectory(path))
+                var path = directory.Path + directory.Name;
+
+                try
                 {
-                    SafeAppendItems(collection, path, stream);
+                    using (var stream = connection.ListDirectory(path))
+                    {
+                        SafeAppendItems(collection, path, stream);
+                        ActionEvent?.Invoke(this, ActionEventArgs.ListSucceed(directory));
+                    }
+                }
+                catch (Exception)
+                {
+                    ActionEvent?.Invoke(this, ActionEventArgs.ListFailed(directory));
                 }
 
-                foreach (var item in collection)
+                foreach (var item in collection.OfType<Directory>())
                 {
-                    if (item is Directory)
-                    {
-                        var relPath = connection.RelativePath + "/" + item.Name;
-                        ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.ListDirectory, Target = item});
-                        ListDirectory(relPath, item.Items);
-                    }
+                    ListDirectory(item, item.Items);
                 }
             });
 
@@ -96,7 +102,7 @@ namespace FtpWpf
             if(Profile == null)
                 return false;
 
-            ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.RenameFile, Target = item});
+           // ActionStarted?.Invoke(this, new ActionEventArgs {Action = Action.Rename, Target = item});
 
             Task.Run(() =>
             {
@@ -114,7 +120,7 @@ namespace FtpWpf
             if (Profile == null)
                 return false;
 
-            ActionStarted?.Invoke(this, new ActionStartedEventArgs {Action = Action.DeleteFile, Target = item});
+           // ActionStarted?.Invoke(this, new ActionEventArgs {Action = Action.Delete, Target = item});
             Task.Run(() =>
             {
                 FtpConnection connection;
@@ -131,7 +137,7 @@ namespace FtpWpf
             if (Profile == null || Dispatcher == null)
                 return false;
 
-            ActionStarted?.Invoke(this, new ActionStartedEventArgs { Action = Action.UploadFile, Target = directory });
+            //ActionStarted?.Invoke(this, new ActionEventArgs { Action = Action.UploadFile, Target = directory });
             Task.Run(() =>
             {
                 FtpConnection connection;
@@ -150,19 +156,89 @@ namespace FtpWpf
             Dispatcher.Invoke(() => { ItemsProvider.AppendItems(stream, path, collection); });
         }
 
-        public enum Action
+        
+        public class ActionEventArgs : EventArgs
         {
-            ListDirectory,
-            DownloadFile,
-            UploadFile,
-            RenameFile,
-            DeleteFile
-        }
+            public enum ActionType
+            {
+                ListDirectory,
+                DownloadFile,
+                UploadFile,
+                Rename,
+                Delete,
+                New
+            }
 
-        public class ActionStartedEventArgs : EventArgs
-        {
-            public Action Action { get; set; }
+            public enum ActionStatus
+            {
+                Started,
+                Succeed,
+                Failed
+            }
+
+            public ActionStatus Status { get; set; }
+            public ActionType Action { get; set; }
             public Item Target { get; set; }
+
+            public static ActionEventArgs ListStarted(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.ListDirectory,
+                    Status = ActionStatus.Started,
+                    Target = item
+                };
+            }
+
+            public static ActionEventArgs ListSucceed(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.ListDirectory,
+                    Status = ActionStatus.Succeed,
+                    Target = item
+                };
+            }
+
+            public static ActionEventArgs ListFailed(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.ListDirectory,
+                    Status = ActionStatus.Failed,
+                    Target = item
+                };
+            }
+
+            public static ActionEventArgs DownloadStarted(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.DownloadFile,
+                    Status = ActionStatus.Started,
+                    Target = item
+                };
+            }
+
+            public static ActionEventArgs DownloadSucceed(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.DownloadFile,
+                    Status = ActionStatus.Succeed,
+                    Target = item
+                };
+            }
+
+            public static ActionEventArgs DownloadFailed(Item item)
+            {
+                return new ActionEventArgs
+                {
+                    Action = ActionType.DownloadFile,
+                    Status = ActionStatus.Failed,
+                    Target = item
+                };
+            }
         }
     }
 }

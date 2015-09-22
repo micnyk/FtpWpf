@@ -82,6 +82,9 @@ namespace FtpWpf
                         throw new Exception("REGEX DO NOT MATCH!!!");
                 }
 
+                if (relativePath[relativePath.Length - 1] != '/')
+                    relativePath += "/";
+
                 var name = matches.Groups["name"].Value;
 
                 if (matches.Groups["dir"].Value.ToLower() == "d")
