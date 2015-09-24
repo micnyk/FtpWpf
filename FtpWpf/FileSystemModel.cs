@@ -73,6 +73,9 @@ namespace FtpWpf
             public static Item TranslateItem(string lsLine, string relativePath)
             {
                 Item item;
+
+                var l = lsLine.Trim(' ', '\t');
+
                 var matches = LsRegex1.Match(lsLine);
 
                 if (!matches.Success)

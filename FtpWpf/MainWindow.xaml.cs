@@ -83,8 +83,62 @@ namespace FtpWpf
 
         private void btnNew_Click(object sender, RoutedEventArgs e)
         {
-            var dir = new Directory {Path = "/", Name = "hello!"};
-            FtpController.Instance.NewDirectory(dir);
+            var btnNewMenu = FindResource("cmNewButton") as ContextMenu;
+            if (btnNewMenu == null)
+                throw new Exception("Resource 'cmNewButton' not found!");
+
+            btnNewMenu.PlacementTarget = btnNew;
+            btnNewMenu.AddHandler(MenuItem.ClickEvent, new RoutedEventHandler(btnNew_MenuItemClick));
+            btnNewMenu.IsOpen = true;
+        }
+
+        private void btnNew_MenuItemClick(object sender, RoutedEventArgs e)
+        {
+            var source = e.Source as MenuItem;
+            if (source == null)
+                return;
+
+            var selectedDirectory = treeView.SelectedItem as Directory;
+            bool file = false;
+
+            switch (source.Name)
+            {
+                case "NewFile":
+                    file = true;
+                    break;
+
+                case "NewDirectory":
+                    file = false;
+                    break;
+            }
+
+            var dialog = new FileNameDialog();
+            if (dialog.ShowDialog() == true)
+            {
+                var name = dialog.ResponseText;
+
+                if(!file)
+                    NewDirectory(selectedDirectory, name);
+            }
+        }
+
+        private void NewDirectory(Directory parent, string name)
+        {
+            ObservableCollection<Item> collection;
+            Directory directory;
+
+            if (parent == null)
+            {
+                collection = FtpController.Instance.Items;
+                directory = new Directory {Name = name, Path = "/"};
+            }
+            else
+            {
+                collection = parent.Items;
+                directory = new Directory {Name = name, Path = parent.Path + parent.Name + "/"};
+            }
+
+            FtpController.Instance.NewDirectory(directory, collection);
         }
     }
 }

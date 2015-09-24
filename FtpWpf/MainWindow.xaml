@@ -10,6 +10,13 @@
     <Window.DataContext>
         <fileSystemModel:Item />
     </Window.DataContext>
+
+    <Window.Resources>
+        <ContextMenu x:Key="cmNewButton">
+            <MenuItem Header="File" Name="NewFile" />
+            <MenuItem Header="Directory" Name="NewDirectory" />
+        </ContextMenu>
+    </Window.Resources>
     
     <Grid>
         <Grid.ColumnDefinitions>
@@ -52,7 +59,7 @@
                 </Grid.RowDefinitions>
                 
                 <ProgressBar Name="ProgressBar" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" />
-                
+
                 <Button Grid.Column="0" Grid.Row="1" Name="btnNew" Content="New" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnNew_Click" />
                 <Button Grid.Column="1" Grid.Row="1" Name="btnDownload" Content="Download" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnDownload_Click" />
                 <Button Grid.Column="2" Grid.Row="1" Name="btnUpload" Content="Upload" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" />
