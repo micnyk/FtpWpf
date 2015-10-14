@@ -24,6 +24,11 @@ namespace FtpWpf
             InitializeComponent();
             tbLog.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
 
+            var ctxMenuNew = FindResource("cmNewButton") as ContextMenu;
+            if(ctxMenuNew == null)
+                throw new Exception("Cant find resource!");
+            ctxMenuNew.AddHandler(MenuItem.ClickEvent, new RoutedEventHandler(btnNew_MenuItemClick));
+
             Logger.LogEvent += AppendLogList;
 
             var controller = FtpController.Instance;
@@ -88,7 +93,6 @@ namespace FtpWpf
                 throw new Exception("Resource 'cmNewButton' not found!");
 
             btnNewMenu.PlacementTarget = btnNew;
-            btnNewMenu.AddHandler(MenuItem.ClickEvent, new RoutedEventHandler(btnNew_MenuItemClick));
             btnNewMenu.IsOpen = true;
         }
 

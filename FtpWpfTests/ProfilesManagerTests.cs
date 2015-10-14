@@ -18,6 +18,8 @@ namespace FtpWpfTests
               new ProfileManager.Profile { Id = 1235, Host = "innnastrona.com", Username = "testowy", Password = "haslo" }
             };
 
+            public IEnumerable<ProfileManager.Profile> ProfilesCollection { get; }
+
             public bool AddProfile(ProfileManager.Profile profile)
             {
                 profiles.Add(profile);
@@ -62,7 +64,7 @@ namespace FtpWpfTests
         [TestMethod]
         public void TestProfileManager()
         {
-            List<ProfileManager.Profile> list = profileManager.GetProfiles();
+            var list = profileManager.ProfilesCollection;
 
             foreach(var profile in list)
             {
