@@ -62,7 +62,7 @@
 
                 <Button Grid.Column="0" Grid.Row="1" Name="btnNew" Content="New" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnNew_Click" />
                 <Button Grid.Column="1" Grid.Row="1" Name="btnDownload" Content="Download" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnDownload_Click" />
-                <Button Grid.Column="2" Grid.Row="1" Name="btnUpload" Content="Upload" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" />
+                <Button Grid.Column="2" Grid.Row="1" Name="btnUpload" Content="Upload" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnUpload_Click" />
                 <Button Grid.Column="0" Grid.Row="2" Name="btnRename" Content="Rename" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnRename_Click" />
                 <Button Grid.Column="1" Grid.Row="2" Name="btnDelete" Content="Delete" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" Click="btnDelete_Click" />
                 <Button Grid.Column="2" Grid.Row="2" Name="btnMove" Content="Move" Style="{StaticResource ProfileManagerButton}" IsEnabled="True" />

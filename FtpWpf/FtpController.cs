@@ -19,7 +19,7 @@ namespace FtpWpf
         public static FtpController Instance => _instance ?? (_instance = new FtpController());
 
         public ProfileManager.Profile Profile { get; set; }
-        public ObservableCollection<Item> Items { get; } 
+        public ObservableCollection<Item> Items { get; }
         public Dispatcher Dispatcher { get; set; }
 
         public event EventHandler<FileProgressEventArgs> FileProgress;
@@ -35,6 +35,7 @@ namespace FtpWpf
             if (Profile == null)
                 return false;
 
+            //TODO: save to file
             outputStream = new MemoryStream();
 
             Task.Run(() =>
@@ -42,15 +43,14 @@ namespace FtpWpf
                 FtpConnection connection;
                 lock (Profile) { connection = new FtpConnection(Profile); }
 
-                connection.FileProgress += delegate(object sender, FileProgressEventArgs args)
+                connection.FileProgress += delegate (object sender, FileProgressEventArgs args)
                 {
                     FileProgress?.Invoke(sender, args);
                 };
 
-                ActionEvent?.Invoke(this, ActionEventArgs.DownloadStarted(file));
-
                 try
                 {
+                    ActionEvent?.Invoke(this, ActionEventArgs.DownloadStarted(file));
                     connection.DownloadFile(file, outputStream);
                 }
                 catch (Exception)
@@ -62,7 +62,7 @@ namespace FtpWpf
                     ActionEvent?.Invoke(this, ActionEventArgs.DownloadSucceed(file));
                 }
             });
-       
+
             return true;
         }
 
@@ -75,7 +75,7 @@ namespace FtpWpf
                 collection = Items;
 
             if (directory == null)
-                directory = new Directory {Name = "", Path = "/"};
+                directory = new Directory { Name = "", Path = "/" };
 
             Task.Run(() =>
             {
@@ -114,7 +114,7 @@ namespace FtpWpf
 
         public bool Rename(Item item, string name)
         {
-            if(Profile == null)
+            if (Profile == null)
                 return false;
 
             Task.Run(() =>
@@ -122,7 +122,7 @@ namespace FtpWpf
                 ActionEvent?.Invoke(this, ActionEventArgs.RenameStarted(item));
 
                 FtpConnection connection;
-                lock(Profile) { connection = new FtpConnection(Profile); }
+                lock (Profile) { connection = new FtpConnection(Profile); }
 
                 try
                 {
@@ -202,184 +202,49 @@ namespace FtpWpf
             return true;
         }
 
+        public bool UploadFile(File file, Directory parent, string localPath)
+        {
+            if (Profile == null || Dispatcher == null)
+                return false;
+
+            Task.Run(() =>
+            {
+                FtpConnection connection;
+                lock (Profile) { connection = new FtpConnection(Profile); }
+
+                connection.FileProgress += delegate (object sender, FileProgressEventArgs args)
+                {
+                    FileProgress?.Invoke(sender, args);
+                };
+
+
+                ActionEvent?.Invoke(this, ActionEventArgs.UploadStarted(file));
+
+                try
+                {
+                    connection.UploadFile(file, localPath);
+                }
+                catch (Exception)
+                {
+                    ActionEvent?.Invoke(this, ActionEventArgs.UploadFailed(file));
+                }
+                finally
+                {
+                    if (parent != null)
+                        Dispatcher.Invoke(() => { parent.Items.Add(file); });
+                    else
+                        Dispatcher.Invoke(() => { Items.Add(file); });
+
+                    ActionEvent?.Invoke(this, ActionEventArgs.UploadSucceed(file));
+                }
+            });
+
+            return true;
+        }
+
         private void SafeAppendItems(ObservableCollection<Item> collection, string path, Stream stream)
         {
             Dispatcher.Invoke(() => { ItemsProvider.AppendItems(stream, path, collection); });
-        }
-
-        
-        public class ActionEventArgs : EventArgs
-        {
-            public enum ActionType
-            {
-                ListDirectory,
-                DownloadFile,
-                UploadFile,
-                Rename,
-                Delete,
-                New
-            }
-
-            public enum ActionStatus
-            {
-                Started,
-                Succeed,
-                Failed
-            }
-
-            public ActionStatus Status { get; set; }
-            public ActionType Action { get; set; }
-            public Item Target { get; set; }
-
-            public static ActionEventArgs ListStarted(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.ListDirectory,
-                    Status = ActionStatus.Started,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs ListSucceed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.ListDirectory,
-                    Status = ActionStatus.Succeed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs ListFailed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.ListDirectory,
-                    Status = ActionStatus.Failed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DownloadStarted(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.DownloadFile,
-                    Status = ActionStatus.Started,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DownloadSucceed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.DownloadFile,
-                    Status = ActionStatus.Succeed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DownloadFailed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.DownloadFile,
-                    Status = ActionStatus.Failed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs RenameStarted(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Rename,
-                    Status = ActionStatus.Started,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs RenameSucceed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Rename,
-                    Status = ActionStatus.Succeed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs RenameFailed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Rename,
-                    Status = ActionStatus.Failed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DeleteStarted(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Delete,
-                    Status = ActionStatus.Started,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DeleteSucceed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Delete,
-                    Status = ActionStatus.Succeed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs DeleteFailed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.Delete,
-                    Status = ActionStatus.Failed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs NewStarted(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.New,
-                    Status = ActionStatus.Started,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs NewSucceed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.New,
-                    Status = ActionStatus.Succeed,
-                    Target = item
-                };
-            }
-
-            public static ActionEventArgs NewFailed(Item item)
-            {
-                return new ActionEventArgs
-                {
-                    Action = ActionType.New,
-                    Status = ActionStatus.Failed,
-                    Target = item
-                };
-            }
         }
     }
 }

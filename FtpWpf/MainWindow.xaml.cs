@@ -7,6 +7,7 @@ using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using FtpWpf.FileSystemModel;
+using Microsoft.Win32;
 using Directory = FtpWpf.FileSystemModel.Directory;
 using File = FtpWpf.FileSystemModel.File;
 
@@ -44,7 +45,7 @@ namespace FtpWpf
             controller.ListDirectory();
         }
 
-        private void LogAction(object sneder, FtpController.ActionEventArgs args)
+        private void LogAction(object sneder, ActionEventArgs args)
         {
             tbLog.Dispatcher.Invoke(() =>
             {
@@ -103,7 +104,10 @@ namespace FtpWpf
                 return;
 
             var selectedDirectory = treeView.SelectedItem as Directory;
-            bool file = false;
+            if (selectedDirectory == null)
+                return;
+
+            var file = false;
 
             switch (source.Name)
             {
@@ -121,28 +125,34 @@ namespace FtpWpf
             {
                 var name = dialog.ResponseText;
 
-                if(!file)
-                    NewDirectory(selectedDirectory, name);
+                
             }
         }
 
-        private void NewDirectory(Directory parent, string name)
+        private void btnUpload_Click(object sender, RoutedEventArgs e)
         {
-            ObservableCollection<Item> collection;
-            Directory directory;
+            Directory selectedDirectory = null;
 
-            if (parent == null)
-            {
-                collection = FtpController.Instance.Items;
-                directory = new Directory {Name = name, Path = "/"};
-            }
-            else
-            {
-                collection = parent.Items;
-                directory = new Directory {Name = name, Path = parent.Path + parent.Name + "/"};
-            }
+            if (treeView.SelectedItem is Directory)
+                selectedDirectory = (Directory) treeView.SelectedItem;
 
-            FtpController.Instance.NewDirectory(directory, collection);
+            var fileDialog = new OpenFileDialog {Multiselect = true};
+            if (fileDialog.ShowDialog(this) != true)
+                return;
+
+            int index = 0;
+            foreach (var file in fileDialog.SafeFileNames.Select(fileName => new File { Name = fileName}))
+            {
+                if (selectedDirectory != null)
+                    file.Path = selectedDirectory.Path + selectedDirectory.Name + "/";
+                else
+                    file.Path = "/";
+
+                var localPath = fileDialog.FileNames[index];
+                index++;
+
+                FtpController.Instance.UploadFile(file, selectedDirectory, localPath);
+            }
         }
     }
 }
