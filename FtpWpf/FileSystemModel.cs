@@ -32,6 +32,8 @@ namespace FtpWpf
                 };
             }
 
+            public Directory Parent { get; set; }
+
             public string Name
             {
                 get { return _name; }
@@ -106,6 +108,8 @@ namespace FtpWpf
                 return item;
             }
 
+
+            // TODO: zmienic items na Directory, zintegrowac w kontrolerze
             public static void AppendItems(Stream ftpResponseStream, string relativePath, ObservableCollection<Item> items)
             {
                 using (var streamReader = new StreamReader(ftpResponseStream))

@@ -15,6 +15,8 @@ namespace FtpWpf
 {
     public partial class MainWindow : Window
     {
+        private Directory parentDirectory;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -104,29 +106,32 @@ namespace FtpWpf
                 return;
 
             var selectedDirectory = treeView.SelectedItem as Directory;
-            if (selectedDirectory == null)
+ 
+            var dialog = new FileNameDialog();
+            if (dialog.ShowDialog() != true)
                 return;
 
-            var file = false;
+            var name = dialog.ResponseText;
+            var path = (selectedDirectory == null) ? "/" : selectedDirectory.Path + selectedDirectory.Name + "/";
+            Item item;
 
             switch (source.Name)
             {
                 case "NewFile":
-                    file = true;
+                    item = new File {Name = name, Path = path};
                     break;
 
                 case "NewDirectory":
-                    file = false;
+                    item = new Directory {Name = name, Path = path};
                     break;
+
+                default:
+                    return;
             }
 
-            var dialog = new FileNameDialog();
-            if (dialog.ShowDialog() == true)
-            {
-                var name = dialog.ResponseText;
+            var collection = selectedDirectory?.Items;
 
-                
-            }
+            FtpController.Instance.New(item, collection);
         }
 
         private void btnUpload_Click(object sender, RoutedEventArgs e)

@@ -99,7 +99,9 @@ namespace FtpWpf
             if (selectedProfile == null)
                 return;
 
-            var mw = new MainWindow(selectedProfile);
+            FtpController.Instance.Profile = selectedProfile;
+
+            var mw = new MainWindow2();
             mw.Show();
             Close();
         }

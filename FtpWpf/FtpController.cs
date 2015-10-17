@@ -142,10 +142,13 @@ namespace FtpWpf
             return true;
         }
 
-        public bool Delete(Item item)
+        public bool Delete(Item item, ObservableCollection<Item> parentCollection = null)
         {
-            if (Profile == null)
+            if (Profile == null || Dispatcher == null)
                 return false;
+
+            if (parentCollection == null)
+                parentCollection = Items;
 
             Task.Run(() =>
             {
@@ -164,6 +167,7 @@ namespace FtpWpf
                 }
                 finally
                 {
+                    Dispatcher.Invoke(() => { parentCollection.Remove(item); });
                     ActionEvent?.Invoke(this, ActionEventArgs.DeleteSucceed(item));
                 }
             });
@@ -171,32 +175,35 @@ namespace FtpWpf
             return true;
         }
 
-        public bool NewDirectory(Directory directory, ObservableCollection<Item> parentCollection)
+        public bool New(Item item, ObservableCollection<Item> parentCollection)
         {
             if (Profile == null || Dispatcher == null)
                 return false;
+
+            if (parentCollection == null)
+                parentCollection = Items;
 
             Task.Run(() =>
             {
                 FtpConnection connection;
                 lock (Profile) { connection = new FtpConnection(Profile); }
 
-                ActionEvent?.Invoke(this, ActionEventArgs.NewStarted(directory));
+                ActionEvent?.Invoke(this, ActionEventArgs.NewStarted(item));
 
                 try
                 {
-                    connection.New(directory);
+                    connection.New(item);
                 }
                 catch (Exception)
                 {
-                    ActionEvent?.Invoke(this, ActionEventArgs.NewFailed(directory));
+                    ActionEvent?.Invoke(this, ActionEventArgs.NewFailed(item));
                 }
                 finally
                 {
-                    ActionEvent?.Invoke(this, ActionEventArgs.NewSucceed(directory));
+                    ActionEvent?.Invoke(this, ActionEventArgs.NewSucceed(item));
                 }
 
-                Dispatcher.Invoke(() => { parentCollection.Add(directory); });
+                Dispatcher.Invoke(() => { parentCollection.Add(item); });
             });
 
             return true;

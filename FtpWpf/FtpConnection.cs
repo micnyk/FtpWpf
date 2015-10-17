@@ -132,7 +132,7 @@ namespace FtpWpf
             return true;
         }
 
-        public bool Remove(Item item)
+        public bool Remove(Item item, bool recursive = true)
         {
             var path = item.Path + item.Name;
             var requestUri = CreateRequestUri(path);
@@ -141,6 +141,14 @@ namespace FtpWpf
             request.Method = (item is Directory)
                 ? WebRequestMethods.Ftp.RemoveDirectory
                 : WebRequestMethods.Ftp.DeleteFile;
+
+            if (item is Directory && recursive)
+            {
+                foreach (var subitem in item.Items)
+                {
+                    Remove(subitem);
+                }
+            }
 
             try
             {
